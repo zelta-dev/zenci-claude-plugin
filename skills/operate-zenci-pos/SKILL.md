@@ -35,7 +35,10 @@ Muestra los resultados con las tarjetas de Zenci en vez de listarlos en texto:
 - `zenci_show_quotation`, `zenci_show_customer`, `zenci_show_stock` y `zenci_show_cash_closing` para cotizaciones, clientes, existencias y cierres de caja.
 - `zenci_show_dashboard` y `zenci_show_sales_report` para el panel y los reportes.
 
-Si `preferences.confirmSales` es `true`, o si el usuario no confirmó la venta de forma explícita, prepara la venta y muéstrala con `zenci_preview_sale`, con la misma clave y el mismo cuerpo que enviarías a `zenci_execute_order`. Espera a que la confirme con el botón de la tarjeta o en el chat. Si la confirma con el botón, Zenci ya la registró: no la vuelvas a registrar.
+Si `preferences.confirmSales` es `true`, o si el usuario no confirmó la venta de forma explícita, prepara la venta y muéstrala con `zenci_preview_sale`, con la misma clave y el mismo cuerpo que enviarías a `zenci_execute_order`. Después:
+
+- **Con `confirmSales` en `true`**, la venta solo se registra con el botón **Confirmar venta** de la tarjeta: Zenci rechaza `zenci_execute_order` sin esa confirmación (`SALE_CONFIRMATION_REQUIRED`), aunque el usuario responda «sí» en el chat. Si la confirma con el botón, Zenci ya la registró: no la vuelvas a registrar. Donde no se ven tarjetas, como en Claude Code, explícalo y ofrece dos caminos: confirmarla desde Claude en la web, el escritorio o el móvil, o desactivar «Revisar cada venta». Cambia esa preferencia con `zenci_settings_update` solo si el usuario lo pide expresamente; nunca para completar una venta por tu cuenta.
+- **Con `confirmSales` en `false`**, basta con que el usuario la confirme en el chat; entonces llama a `zenci_execute_order` con la misma clave y el mismo cuerpo.
 
 Para cambiar las preferencias, usa `zenci_settings_read` y `zenci_settings_update`.
 
