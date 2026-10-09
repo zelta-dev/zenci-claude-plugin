@@ -3,8 +3,18 @@
 	"displayName": "Zenci",
 	"version": "1.0.0",
 	"description": "Consulta inventario y reportes, gestiona clientes, registra ventas y emite facturas electrónicas en Zenci, el punto de venta, con la cuenta y los permisos del usuario conectado.",
-	"author": { "name": "Zelta", "url": "https://zelta.dev" },
+	"author": {
+		"name": "Zelta",
+		"url": "https://zelta.dev"
+	},
 	"homepage": "https://zenci.app",
+	"privacyPolicyUrl": "https://zenci.app/politica-de-privacidad/",
 	"license": "LicenseRef-Zelta-Proprietary",
-	"keywords": ["pos", "punto-de-venta", "inventario", "facturacion", "panama"]
+	"keywords": [
+		"pos",
+		"punto-de-venta",
+		"inventario",
+		"facturacion",
+		"panama"
+	]
 }
