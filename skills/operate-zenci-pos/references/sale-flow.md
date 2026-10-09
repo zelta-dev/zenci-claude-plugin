@@ -1,0 +1,18 @@
+# Venta con factura electrónica
+
+Este flujo sigue el checkout actual de Zenci. Consulta los esquemas de las herramientas para los campos vigentes.
+
+1. **Cuenta y contexto.** Consulta `zenci_connection`; resuelve sucursal, bodega de salida y una caja abierta que corresponda al usuario y la sucursal. Si falta una caja o autorización para usarla, pide resolverlo; no abras otra automáticamente.
+2. **Productos.** Busca por nombre, SKU o código y confirma la variante/presentación. Resuelve sus existencias, precio, lista de precios del cliente e impuestos desde Zenci. Usa los identificadores reales de variante. No conviertas un artículo existente en una línea manual para evitar controles de existencias. Las presentaciones vinculadas descuentan su unidad base automáticamente.
+3. **Cliente y pago.** Resuelve al cliente y sus datos fiscales. No inventes RUC, DV, dirección o identificación. Si corresponde consumidor final, sigue la configuración del comercio y la indicación del usuario. Identifica el medio, importe recibido y referencia cuando aplique; una tarjeta o transferencia no se considera cobrada por haberla mencionado. Reutiliza las reglas de descuentos, crédito, retenciones y monedas de Zenci.
+4. **Registrar.** Obtén una clave nueva y llama `zenci_execute_order` con `body` conforme a su esquema: `branchId`, `customerId` si corresponde, `posSessionId`, `saleType`, `items`, `payments` y las demás opciones necesarias. Cantidades e importes se expresan en los decimales de texto exigidos por el API. Para una venta directa con entrega ahora, utiliza `deliverImmediately: true`; respeta una entrega posterior o preparación expresamente solicitada.
+5. **Verificar la venta.** Guarda `order.id`, su referencia, importes, pagos, `paymentStatus`, `fulfillmentStatus` y advertencias. El servidor reserva o descuenta el inventario según el tipo de venta y la entrega. No hagas un segundo ajuste manual. No vuelvas a registrar por separado pagos que ya viajaron en `execute_order`.
+6. **Emitir.** Si la venta ya incluye una factura, verifica esa factura. Si no la tiene y el usuario pidió facturar, obtén otra clave y llama `zenci_generate_order_invoice` con `path.orderId`. La facturación debe estar activa y configurada; el usuario necesita sus permisos fiscales. Un conflicto por factura existente se resuelve consultando `zenci_get_invoice_by_order`.
+7. **Confirmar resultado fiscal.** Inspecciona `invoice.status` y `invoice.cufe`, aunque HTTP sea 200. `enrolled` con CUFE confirma emisión. `pending` queda en proceso: consulta `zenci_get_invoice_by_order` un número acotado de veces. `failed` es rechazo; `manual_review_required` requiere verificar con el proveedor y no reemitir automáticamente; `cancelled` no es una factura vigente. No anuncies éxito en esos estados.
+8. **Cerrar.** Informa referencia, total, pago, entrega y estado fiscal. Si se emitió, devuelve el CUFE y el PDF cuando la herramienta pueda recuperarlo. Envía por correo únicamente si el usuario lo pidió. Si la factura falló, conserva la venta y explica el pendiente fiscal sin repetir el cobro ni restar existencias otra vez.
+
+## Fallos y reanudación
+
+Conserva cada clave junto a la operación, sus argumentos y cualquier identificador obtenido. Consulta `zenci_operation_status` después de una pérdida de respuesta. Un comprobante `already_attempted` no es una nueva ejecución: recupera el recurso y continúa desde su estado actual. Si no hay identificador o el resultado sigue incierto, verifica la venta en Zenci antes de registrar otra.
+
+Una devolución, anulación o nota de crédito es un flujo posterior con autorización y permisos propios. No deshagas una venta automáticamente para ocultar un error de facturación.
